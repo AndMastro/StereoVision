@@ -12,9 +12,11 @@ var CAVE = {
     far : 10000.0,
     TEX_SIZE : 1024, // recommended: 1024
     
-    front : new DisplaySurface(new Vec3(-150.0, -150.0, -150.0), new Vec3(300.0, 0.0,   0.0), new Vec3(0.0, 300.0,   0.0)),
+    front : new DisplaySurface(new Vec3(-150.0, -150.0, -150.0), new Vec3(300.0, 0.0, 0.0), new Vec3(0.0, 300.0, 0.0)),
     // TBC: remaining display surfaces
-	
+    left : new DisplaySurface(new Vec3(-150.0, -150.0, 150.0), new Vec3(0.0, 0.0, -300.0), new Vec3(0.0, 300.0, 0.0)),
+    right : new DisplaySurface(new Vec3(150.0, -150.0, -150.0), new Vec3(0.0, 0.0, 300.0), new Vec3(0.0, 300.0, 0.0)),
+    floor : new DisplaySurface(new Vec3(-150.0, -150.0, 150.0), new Vec3(300.0, 0.0, 0.0), new Vec3(0.0, 0.0, -300.0)),
     // Functions
     
     init : function(){
@@ -40,8 +42,11 @@ var CAVE = {
         var objs = [
             // [MODEL_TYPE,POSITION = [X, Y, Z], SCALE = [X, Y, Z],   ROTATION = [theta_deg, phi_deg]]
 			// The modeling transform will be: T(pos)*Rx(phi)*Ry(theta)*S(scale)	
-            [ "Plane", [   0.0,    0.0, -150.0], [300.0, 300.0, 1.0], [0.0, 0.0]   ] // Front plane
-			// TBC: remaining objects representing display surfaces
+            ["Plane", [0.0, 0.0, -150.0], [300.0, 300.0, 1.0], [0.0, 0.0]], // Front plane
+            // TBC: remaining objects representing display surfaces
+            ["Plane", [-150.0, 0.0, 0.0], [300.0, 300.0, 1.0], [90.0, 0.0]], // left
+            ["Plane", [150.0, 0.0, 0.0], [300.0, 300.0, 1.0], [270.0, 0.0]], // right
+            ["Plane", [0.0, -150.0, 0.0], [300.0, 300.0, 1.0], [0.0, 90.0]] // left
         ];
 		
 		// Convert the data above into GLV.Object's
@@ -58,7 +63,10 @@ var CAVE = {
         // Init textures for each display surface
         GLV.TextureManager.createTextureAndFBO("front", this.TEX_SIZE, this.TEX_SIZE);
 		// TBC: remaining textures
-        
+        GLV.TextureManager.createTextureAndFBO("left", this.TEX_SIZE, this.TEX_SIZE);
+        GLV.TextureManager.createTextureAndFBO("right", this.TEX_SIZE, this.TEX_SIZE);
+        GLV.TextureManager.createTextureAndFBO("floor", this.TEX_SIZE, this.TEX_SIZE);
+
         // Init keyboard callbacks
         var checkMoveScene = function(){ return GLV.uiSelectedMoveMode === GLV.MOVEMODE_SCENE; };
         var checkMoveEyes = function(){ return GLV.uiSelectedMoveMode === GLV.MOVEMODE_EYES; };
@@ -129,7 +137,11 @@ var CAVE = {
 		GLV.scene.draw(viewL, projL);
 		
 		// TBC: the same for right eye
-		
+        gl.colorMask(false, false, true, false);
+        viewR = surface.viewingMatrix(this.rightEye);
+        projR = surface.projectionMatrix(this.rightEye, this.near, this.far);
+        GLV.scene.draw(viewR, projR);
+        
 		// Default
 		gl.colorMask(true, true, true, true);
 		
@@ -153,7 +165,15 @@ var CAVE = {
 		this.drawStereo(this.front)
 		
 		// TBC: draw on remaining surfaces
-		
+        GLV.TextureManager.bindFBO("left");
+        this.drawStereo(this.left);
+
+        GLV.TextureManager.bindFBO("right");
+        this.drawStereo(this.right);
+        
+        GLV.TextureManager.bindFBO("floor");
+        this.drawStereo(this.floor);
+
         // Restore the gl context
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -172,7 +192,10 @@ var CAVE = {
         gl.uniform1i(gl.getUniformLocation(shaderProg, "texIdx"), 0);
         this.objects[0].draw(GLV.camera.vMat, GLV.camera.pMat);
 		//TBC: draw remaining quads
-
+        this.objects[1].draw(GLV.camera.vMat, GLV.camera.pMat);
+        this.objects[2].draw(GLV.camera.vMat, GLV.camera.pMat);
+        this.objects[3].draw(GLV.camera.vMat, GLV.camera.pMat);
+        
 		// ------------------------------------------------------------------
 		// 4. Draw the spheres representing user's eyes
 		// ------------------------------------------------------------------
