@@ -46,7 +46,7 @@ var CAVE = {
             // TBC: remaining objects representing display surfaces
             ["Plane", [-150.0, 0.0, 0.0], [300.0, 300.0, 1.0], [90.0, 0.0]], // left
             ["Plane", [150.0, 0.0, 0.0], [300.0, 300.0, 1.0], [270.0, 0.0]], // right
-            ["Plane", [0.0, -150.0, 0.0], [300.0, 300.0, 1.0], [0.0, 90.0]] // left
+            ["Plane", [0.0, -150.0, 0.0], [300.0, 300.0, 1.0], [0.0, 270.0]] // floor
         ];
 		
 		// Convert the data above into GLV.Object's
@@ -132,19 +132,18 @@ var CAVE = {
 	drawStereo: function(surface){
 		// Left
 		gl.colorMask(true, false, false, false);
-		viewL = surface.viewingMatrix(this.leftEye);
-		projL = surface.projectionMatrix(this.leftEye, this.near, this.far);
+		var viewL = surface.viewingMatrix(this.leftEye);
+		var projL = surface.projectionMatrix(this.leftEye, this.near, this.far);
 		GLV.scene.draw(viewL, projL);
 		
 		// TBC: the same for right eye
         gl.colorMask(false, false, true, false);
-        viewR = surface.viewingMatrix(this.rightEye);
-        projR = surface.projectionMatrix(this.rightEye, this.near, this.far);
+        var viewR = surface.viewingMatrix(this.rightEye);
+        var projR = surface.projectionMatrix(this.rightEye, this.near, this.far);
         GLV.scene.draw(viewR, projR);
         
 		// Default
 		gl.colorMask(true, true, true, true);
-		
 	},
 	
     draw : function(){
@@ -184,16 +183,24 @@ var CAVE = {
 		
         GLV.ShaderManager.setActiveShader(GLV.ShaderManager.CAVE_DISPLAY_SURFACE);
         var shaderProg = GLV.ShaderManager.getActiveShader();
+
         // Set lighting uniforms
         GLV.scene.light.setUniforms(shaderProg, GLV.camera.vMat.copy());
+
         // Set DisplaySurfaces textures
         GLV.TextureManager.setUniformTexArray(["front", "left", "right", "floor"], shaderProg, "textures");
         
         gl.uniform1i(gl.getUniformLocation(shaderProg, "texIdx"), 0);
         this.objects[0].draw(GLV.camera.vMat, GLV.camera.pMat);
+
 		//TBC: draw remaining quads
+        gl.uniform1i(gl.getUniformLocation(shaderProg, "texIdx"), 1);
         this.objects[1].draw(GLV.camera.vMat, GLV.camera.pMat);
+
+        gl.uniform1i(gl.getUniformLocation(shaderProg, "texIdx"), 2);
         this.objects[2].draw(GLV.camera.vMat, GLV.camera.pMat);
+
+        gl.uniform1i(gl.getUniformLocation(shaderProg, "texIdx"), 3);
         this.objects[3].draw(GLV.camera.vMat, GLV.camera.pMat);
         
 		// ------------------------------------------------------------------
