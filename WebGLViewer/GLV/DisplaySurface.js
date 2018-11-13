@@ -22,7 +22,7 @@ DisplaySurface.prototype.viewingMatrix = function(eye){
 
 	// Project EYE Point to the Plane (DisplaySurface)
 	// Source: https://math.stackexchange.com/questions/100761/how-do-i-find-the-projection-of-a-point-onto-a-plane
-	var value_t = (normal.x * this.origin.x - normal.x * eye.x + normal.y * this.origin.y - normal.y * eye.y + normal.z * this.origin.z - normal.z * eye.z) / (normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+	var value_t = (Vec3.dot(normal, this.origin) - Vec3.dot(normal, eye)) / normal.norm();
 
 	var target = Vec3.add(eye, normal.mult(value_t));
 	
