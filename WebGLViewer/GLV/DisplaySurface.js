@@ -24,10 +24,10 @@ DisplaySurface.prototype.viewingMatrix = function(eye){
 	// Source: https://math.stackexchange.com/questions/100761/how-do-i-find-the-projection-of-a-point-onto-a-plane
 	var value_t = (normal.x * this.origin.x - normal.x * eye.x + normal.y * this.origin.y - normal.y * eye.y + normal.z * this.origin.z - normal.z * eye.z) / (normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
 
-	var vrp = new Vec3(eye.x + value_t * normal.x, eye.y + value_t * normal.y, eye.z + value_t * normal.z);
- 
+	var target = Vec3.add(eye, normal.mult(value_t));
+	
 	// Create LookAt from Eye and Forward and Up Vectors
-	mat.lookAt(eye, vrp, up);
+	mat.lookAt(eye, target, up);
 	
 	return mat;
 };
@@ -36,9 +36,7 @@ DisplaySurface.prototype.projectionMatrix = function(eye, znear, zfar){
 	mat = new Mat4();
     mat.loadIdentity();
 		
-	var left, right, bottom, top;
-
-	// CSompute vectors from screen vertices to eye
+	// Compute vectors from screen vertices to eye
 	var v1 = Vec3.subtract(this.origin, eye);
 	var vertex = Vec3.add(this.origin, this.u, this.v);
 	var v2 = Vec3.subtract(vertex, eye);
@@ -51,17 +49,13 @@ DisplaySurface.prototype.projectionMatrix = function(eye, znear, zfar){
 
 	// Compute distance from eye to screen
 	var normal = Vec3.cross(this.u, this.v).normalize();
-	var screenDist = -(Vec3.dot(normal, v2));
+	var screenDist = -1.0 * (Vec3.dot(normal, v2));
 
 	// Compute left, right, top, bottom
-	if (Vec3.dot(pl, this.u) > 0) left = pl.norm()*znear/screenDist;
-    else left = -pl.norm()*znear/screenDist;
-    if (Vec3.dot(pr, this.u) > 0) right = pr.norm()*znear/screenDist;
-    else right = -pr.norm()*znear/screenDist;
-    if (Vec3.dot(pb, this.v) > 0) bottom = pb.norm()*znear/screenDist;
-    else bottom = -pb.norm()*znear/screenDist;
-    if (Vec3.dot(pt, this.v) > 0) top = pt.norm()*znear/screenDist;
-	else top = -pt.norm()*znear/screenDist;
+	var left = Math.sign(Vec3.dot(pl, this.u)) * pl.norm() * znear / screenDist;
+    var right = Math.sign(Vec3.dot(pr, this.u)) * pr.norm() * znear / screenDist;
+    var bottom = Math.sign(Vec3.dot(pb, this.v)) * pb.norm() * znear / screenDist;
+    var top = Math.sign(Vec3.dot(pt, this.v)) * pt.norm() * znear / screenDist;
 	
 	mat.frustum(left, right, bottom, top, znear, zfar);
 	
